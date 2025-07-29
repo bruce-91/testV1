@@ -73,17 +73,59 @@ export const mockFolders = [
   {
     id: "folder1",
     name: "Fire Deck",
-    cards: []
+    cards: [mockCards[0], mockCards[1]],
+    profileImage: null,
+    cardBack: null
   },
   {
     id: "folder2", 
     name: "Water Deck",
-    cards: []
+    cards: [mockCards[2], mockCards[3]],
+    profileImage: null,
+    cardBack: null
   },
   {
     id: "folder3",
     name: "Spell Cards",
-    cards: []
+    cards: [mockCards[1], mockCards[3]],
+    profileImage: null,
+    cardBack: null
+  },
+  {
+    id: "sleeves",
+    name: "Sleeves",
+    cards: [],
+    profileImage: null,
+    cardBack: null,
+    isSystemFolder: true
+  }
+];
+
+export const mockSleeves = [
+  {
+    id: "sleeve1",
+    name: "Blue Celtic Pattern",
+    url: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=420&fit=crop"
+  },
+  {
+    id: "sleeve2",
+    name: "Red Dragon Scale",
+    url: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=300&h=420&fit=crop"
+  },
+  {
+    id: "sleeve3",
+    name: "Golden Ornate",
+    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=300&h=420&fit=crop"
+  },
+  {
+    id: "sleeve4",
+    name: "Dark Magic Circle",
+    url: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=420&fit=crop&sat=-100"
+  },
+  {
+    id: "sleeve5",
+    name: "Forest Guardian",
+    url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=300&h=420&fit=crop&hue=120"
   }
 ];
 
