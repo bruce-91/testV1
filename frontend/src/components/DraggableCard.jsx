@@ -12,8 +12,10 @@ const DraggableCard = ({
   onFlip, 
   onRightClick, 
   onHover,
+  onClick,
   hasStack,
-  isHoveredStack 
+  isHoveredStack,
+  isSelected 
 }) => {
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -31,10 +33,17 @@ const DraggableCard = ({
     event.target.focus();
   };
 
+  const handleClick = (event) => {
+    event.stopPropagation();
+    if (onClick) onClick(card.id);
+  };
+
   return (
     <div
       className={`absolute cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105 ${
         isHoveredStack ? 'ring-2 ring-yellow-400' : ''
+      } ${
+        isSelected ? 'ring-2 ring-blue-400' : ''
       }`}
       style={{
         left: position?.x || 0,
@@ -47,6 +56,7 @@ const DraggableCard = ({
       onMouseDown={handleMouseDown}
       onMouseEnter={() => onHover(card, true)}
       onMouseLeave={() => onHover(card, false)}
+      onClick={handleClick}
       onDoubleClick={() => onFlip(card.id)}
       onContextMenu={(e) => onRightClick(card, e)}
       data-card-id={card.id}
