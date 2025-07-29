@@ -10,9 +10,22 @@ const GameSimulator = () => {
   const [cards, setCards] = useState(mockCards);
   const [folders, setFolders] = useState(mockFolders);
   const [gameState, setGameState] = useState({
-    player1Hand: [],
-    player2Hand: [],
-    playArea: [],
+    player1Hand: [mockCards[0], mockCards[1]], // Fire Dragon, Lightning Bolt
+    player2Hand: [mockCards[2], mockCards[3]], // Water Guardian, Healing Potion
+    playArea: [
+      {
+        ...mockCards[4], // Dark Assassin
+        position: { x: 200, y: 150 },
+        rotation: 0,
+        flipped: false
+      },
+      {
+        ...mockCards[5], // Mirror Force
+        position: { x: 350, y: 200 },
+        rotation: 0,
+        flipped: true
+      }
+    ],
     playmats: {
       backgroundImage: null,
       customZones: []
