@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import GameBoard from "./GameBoard";
+import EnhancedGameBoard from "./EnhancedGameBoard";
 import CardCreator from "./CardCreator";
-import CardLibrary from "./CardLibrary";
+import EnhancedCardLibrary from "./EnhancedCardLibrary";
+import PlaymatSettings from "./PlaymatSettings";
 import { mockCards, mockFolders } from "../utils/mockData";
 import { Users, Plus, Library, Settings } from "lucide-react";
 
@@ -42,6 +43,18 @@ const GameSimulator = () => {
       name: folderName,
       cards: []
     }]);
+  }, []);
+
+  const addCardToDeck = useCallback((card, deckId) => {
+    setFolders(prev => prev.map(folder => {
+      if (folder.id === deckId) {
+        return {
+          ...folder,
+          cards: [...folder.cards, card]
+        };
+      }
+      return folder;
+    }));
   }, []);
 
   const moveCardToHand = useCallback((card, player) => {
@@ -106,7 +119,7 @@ const GameSimulator = () => {
         </TabsList>
 
         <TabsContent value="game" className="h-full p-0">
-          <GameBoard 
+          <EnhancedGameBoard 
             gameState={gameState}
             setGameState={setGameState}
             cards={cards}
@@ -120,21 +133,20 @@ const GameSimulator = () => {
         </TabsContent>
 
         <TabsContent value="library" className="h-full p-4">
-          <CardLibrary 
+          <EnhancedCardLibrary 
             cards={cards}
             folders={folders}
             onAddFolder={addFolder}
             onMoveCardToHand={moveCardToHand}
+            onAddCardToDeck={addCardToDeck}
           />
         </TabsContent>
 
         <TabsContent value="settings" className="h-full p-4">
-          <div className="max-w-2xl">
-            <h2 className="text-xl font-semibold mb-4">Playmat Customization</h2>
-            <p className="text-slate-400">
-              Playmat customization features will be available here. You can upload background images and define custom zones.
-            </p>
-          </div>
+          <PlaymatSettings 
+            gameState={gameState}
+            setGameState={setGameState}
+          />
         </TabsContent>
       </Tabs>
     </div>
