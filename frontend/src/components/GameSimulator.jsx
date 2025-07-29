@@ -1,15 +1,16 @@
 import React, { useState, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import EnhancedGameBoard from "./EnhancedGameBoard";
+import FinalEnhancedGameBoard from "./FinalEnhancedGameBoard";
 import CardCreator from "./CardCreator";
-import EnhancedCardLibrary from "./EnhancedCardLibrary";
+import FinalEnhancedCardLibrary from "./FinalEnhancedCardLibrary";
 import PlaymatSettings from "./PlaymatSettings";
-import { mockCards, mockFolders } from "../utils/mockData";
+import { mockCards, mockFolders, mockSleeves } from "../utils/mockData";
 import { Users, Plus, Library, Settings } from "lucide-react";
 
 const GameSimulator = () => {
   const [cards, setCards] = useState(mockCards);
   const [folders, setFolders] = useState(mockFolders);
+  const [sleeves, setSleeves] = useState(mockSleeves);
   const [gameState, setGameState] = useState({
     player1Hand: [mockCards[0], mockCards[1]], // Fire Dragon, Lightning Bolt
     player2Hand: [mockCards[2], mockCards[3]], // Water Guardian, Healing Potion
@@ -41,8 +42,14 @@ const GameSimulator = () => {
     setFolders(prev => [...prev, {
       id: Date.now().toString(),
       name: folderName,
-      cards: []
+      cards: [],
+      profileImage: null,
+      cardBack: null
     }]);
+  }, []);
+
+  const addSleeve = useCallback((newSleeve) => {
+    setSleeves(prev => [...prev, newSleeve]);
   }, []);
 
   const addCardToDeck = useCallback((card, deckId) => {
@@ -51,6 +58,24 @@ const GameSimulator = () => {
         return {
           ...folder,
           cards: [...folder.cards, card]
+        };
+      }
+      return folder;
+    }));
+  }, []);
+
+  const updateDeck = useCallback((updatedDeck) => {
+    setFolders(prev => prev.map(folder => 
+      folder.id === updatedDeck.id ? updatedDeck : folder
+    ));
+  }, []);
+
+  const removeCardFromDeck = useCallback((deckId, cardId) => {
+    setFolders(prev => prev.map(folder => {
+      if (folder.id === deckId) {
+        return {
+          ...folder,
+          cards: folder.cards.filter(card => card.id !== cardId)
         };
       }
       return folder;
@@ -119,10 +144,11 @@ const GameSimulator = () => {
         </TabsList>
 
         <TabsContent value="game" className="h-full p-0">
-          <EnhancedGameBoard 
+          <FinalEnhancedGameBoard 
             gameState={gameState}
             setGameState={setGameState}
             cards={cards}
+            folders={folders}
             onMoveCardToHand={moveCardToHand}
             onMoveCardToPlayArea={moveCardToPlayArea}
           />
@@ -133,12 +159,16 @@ const GameSimulator = () => {
         </TabsContent>
 
         <TabsContent value="library" className="h-full p-4">
-          <EnhancedCardLibrary 
+          <FinalEnhancedCardLibrary 
             cards={cards}
             folders={folders}
+            sleeves={sleeves}
             onAddFolder={addFolder}
             onMoveCardToHand={moveCardToHand}
             onAddCardToDeck={addCardToDeck}
+            onUpdateDeck={updateDeck}
+            onRemoveCardFromDeck={removeCardFromDeck}
+            onAddSleeve={addSleeve}
           />
         </TabsContent>
 
