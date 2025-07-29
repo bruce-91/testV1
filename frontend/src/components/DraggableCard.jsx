@@ -12,7 +12,8 @@ const DraggableCard = ({
   onFlip, 
   onRightClick, 
   onHover,
-  hasStack 
+  hasStack,
+  isHoveredStack 
 }) => {
   useEffect(() => {
     const handleKeyPress = (event) => {
@@ -32,7 +33,9 @@ const DraggableCard = ({
 
   return (
     <div
-      className="absolute cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105"
+      className={`absolute cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105 ${
+        isHoveredStack ? 'ring-2 ring-yellow-400' : ''
+      }`}
       style={{
         left: position?.x || 0,
         top: position?.y || 0,
