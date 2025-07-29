@@ -1,0 +1,131 @@
+import React, { useState, useCallback } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import GameBoard from "./GameBoard";
+import CardCreator from "./CardCreator";
+import CardLibrary from "./CardLibrary";
+import { mockCards, mockFolders } from "../utils/mockData";
+import { Users, Plus, Library, Settings } from "lucide-react";
+
+const GameSimulator = () => {
+  const [cards, setCards] = useState(mockCards);
+  const [folders, setFolders] = useState(mockFolders);
+  const [gameState, setGameState] = useState({
+    player1Hand: [],
+    player2Hand: [],
+    playArea: [],
+    playmats: {
+      backgroundImage: null,
+      customZones: []
+    }
+  });
+
+  const addCard = useCallback((newCard) => {
+    setCards(prev => [...prev, { ...newCard, id: Date.now().toString() }]);
+  }, []);
+
+  const addFolder = useCallback((folderName) => {
+    setFolders(prev => [...prev, {
+      id: Date.now().toString(),
+      name: folderName,
+      cards: []
+    }]);
+  }, []);
+
+  const moveCardToHand = useCallback((card, player) => {
+    setGameState(prev => ({
+      ...prev,
+      [`player${player}Hand`]: [...prev[`player${player}Hand`], card],
+      playArea: prev.playArea.filter(item => item.id !== card.id)
+    }));
+  }, []);
+
+  const moveCardToPlayArea = useCallback((card, position) => {
+    setGameState(prev => {
+      const newPlayArea = [...prev.playArea];
+      newPlayArea.push({
+        ...card,
+        position,
+        rotation: 0,
+        flipped: false
+      });
+      
+      return {
+        ...prev,
+        playArea: newPlayArea,
+        player1Hand: prev.player1Hand.filter(c => c.id !== card.id),
+        player2Hand: prev.player2Hand.filter(c => c.id !== card.id)
+      };
+    });
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-white">
+      <div className="border-b border-slate-700 bg-slate-800">
+        <div className="px-4 py-3">
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            Card Game Simulator
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Generic virtual tabletop for any card game
+          </p>
+        </div>
+      </div>
+
+      <Tabs defaultValue="game" className="h-[calc(100vh-80px)]">
+        <TabsList className="w-full bg-slate-800 border-b border-slate-700 rounded-none h-12">
+          <TabsTrigger value="game" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Game Board
+          </TabsTrigger>
+          <TabsTrigger value="create" className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Create Cards
+          </TabsTrigger>
+          <TabsTrigger value="library" className="flex items-center gap-2">
+            <Library className="h-4 w-4" />
+            My Cards
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Playmat Settings
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="game" className="h-full p-0">
+          <GameBoard 
+            gameState={gameState}
+            setGameState={setGameState}
+            cards={cards}
+            onMoveCardToHand={moveCardToHand}
+            onMoveCardToPlayArea={moveCardToPlayArea}
+          />
+        </TabsContent>
+
+        <TabsContent value="create" className="h-full p-4">
+          <CardCreator onAddCard={addCard} />
+        </TabsContent>
+
+        <TabsContent value="library" className="h-full p-4">
+          <CardLibrary 
+            cards={cards}
+            folders={folders}
+            onAddFolder={addFolder}
+            onMoveCardToHand={moveCardToHand}
+          />
+        </TabsContent>
+
+        <TabsContent value="settings" className="h-full p-4">
+          <div className="max-w-2xl">
+            <h2 className="text-xl font-semibold mb-4">Playmat Customization</h2>
+            <p className="text-slate-400">
+              Playmat customization features will be available here. You can upload background images and define custom zones.
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default GameSimulator;
