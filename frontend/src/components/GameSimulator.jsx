@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import FinalEnhancedGameBoard from "./FinalEnhancedGameBoard";
+import UltimateGameBoard from "./UltimateGameBoard";
 import CardCreator from "./CardCreator";
-import FinalEnhancedCardLibrary from "./FinalEnhancedCardLibrary";
+import FinalCardLibraryWithSubTabs from "./FinalCardLibraryWithSubTabs";
 import PlaymatSettings from "./PlaymatSettings";
 import { mockCards, mockFolders, mockSleeves } from "../utils/mockData";
 import { Users, Plus, Library, Settings } from "lucide-react";
@@ -70,12 +70,21 @@ const GameSimulator = () => {
     ));
   }, []);
 
-  const removeCardFromDeck = useCallback((deckId, cardId) => {
+  const removeCardFromDeck = useCallback((deckId, cardId, quantity = 1) => {
     setFolders(prev => prev.map(folder => {
       if (folder.id === deckId) {
+        const updatedCards = [...folder.cards];
+        for (let i = 0; i < quantity; i++) {
+          const index = updatedCards.findIndex(card => card.id === cardId);
+          if (index !== -1) {
+            updatedCards.splice(index, 1);
+          } else {
+            break; // No more cards of this type to remove
+          }
+        }
         return {
           ...folder,
-          cards: folder.cards.filter(card => card.id !== cardId)
+          cards: updatedCards
         };
       }
       return folder;
@@ -96,7 +105,7 @@ const GameSimulator = () => {
       newPlayArea.push({
         ...card,
         position,
-        rotation: 0,
+        rotation: card.rotation || 0,
         flipped: false
       });
       
@@ -144,7 +153,7 @@ const GameSimulator = () => {
         </TabsList>
 
         <TabsContent value="game" className="h-full p-0">
-          <FinalEnhancedGameBoard 
+          <UltimateGameBoard 
             gameState={gameState}
             setGameState={setGameState}
             cards={cards}
@@ -159,7 +168,7 @@ const GameSimulator = () => {
         </TabsContent>
 
         <TabsContent value="library" className="h-full p-4">
-          <FinalEnhancedCardLibrary 
+          <FinalCardLibraryWithSubTabs 
             cards={cards}
             folders={folders}
             sleeves={sleeves}
