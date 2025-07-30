@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import UltimateGameBoard from "./UltimateGameBoard";
+import FinalEnhancedGameBoard from "./FinalEnhancedGameBoard";
 import CardCreator from "./CardCreator";
 import FinalCardLibraryWithSubTabs from "./FinalCardLibraryWithSubTabs";
 import PlaymatSettings from "./PlaymatSettings";
