@@ -1,12 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Card } from "./ui/card";
-import DraggableCard from "./DraggableCard";
+import EnhancedDraggableCard from "./EnhancedDraggableCard";
 import PlayerHand from "./PlayerHand";
 import StackModal from "./StackModal";
-import GameBoardSidebar from "./GameBoardSidebar";
+import EnhancedGameBoardSidebar from "./EnhancedGameBoardSidebar";
 import { useToast } from "../hooks/use-toast";
 
-const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMoveCardToHand, onMoveCardToPlayArea }) => {
+const UltimateGameBoard = ({ gameState, setGameState, cards, folders, onMoveCardToHand, onMoveCardToPlayArea }) => {
   const [draggedCard, setDraggedCard] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedCards, setSelectedCards] = useState([]);
@@ -16,6 +16,9 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
   const [selectedCard, setSelectedCard] = useState(null);
   const boardRef = useRef(null);
   const { toast } = useToast();
+
+  // Track card rotation states and deck origins
+  const [cardStates, setCardStates] = useState({});
 
   // Handle keyboard events for stack shuffling and card deletion
   useEffect(() => {
@@ -32,6 +35,14 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [hoveredStack, selectedCard]);
+
+  const getDeckCardBack = (card) => {
+    // Find which deck this card originally came from
+    const originDeck = folders.find(folder => 
+      folder.cards.some(deckCard => deckCard.id === card.id)
+    );
+    return originDeck?.cardBack || null;
+  };
 
   const handleDragStart = useCallback((card, event) => {
     setDraggedCard(card);
@@ -59,21 +70,29 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
         };
 
         if (dropData.type === 'card') {
-          // Single card drop
-          onMoveCardToPlayArea(dropData.data, dropPosition);
+          // Single card drop - preserve deck origin
+          const cardWithState = {
+            ...dropData.data,
+            deckOrigin: folders.find(f => f.cards.some(c => c.id === dropData.data.id))?.id
+          };
+          onMoveCardToPlayArea(cardWithState, dropPosition);
           toast({
             title: "Card Deployed",
             description: `${dropData.data.name} added to game board`
           });
         } else if (dropData.type === 'folder') {
-          // Folder drop - deploy all cards
+          // Folder drop - deploy all cards with deck origin
           const folder = dropData.data;
           folder.cards.forEach((card, index) => {
             const offsetPosition = {
               x: dropPosition.x + (index % 5) * 30,
               y: dropPosition.y + Math.floor(index / 5) * 40
             };
-            onMoveCardToPlayArea(card, offsetPosition);
+            const cardWithState = {
+              ...card,
+              deckOrigin: folder.id
+            };
+            onMoveCardToPlayArea(cardWithState, offsetPosition);
           });
           toast({
             title: "Deck Deployed",
@@ -109,14 +128,19 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
     });
 
     if (targetCard) {
-      // Create or add to stack
+      // Create or add to stack - preserve rotation
+      const cardToAdd = {
+        ...draggedCard,
+        savedRotation: cardStates[draggedCard.id]?.rotation || 0
+      };
+      
       setGameState(prev => ({
         ...prev,
         playArea: prev.playArea.map(card => {
           if (card.id === targetCard.id) {
             return {
               ...card,
-              stack: card.stack ? [...card.stack, draggedCard] : [draggedCard]
+              stack: card.stack ? [...card.stack, cardToAdd] : [cardToAdd]
             };
           }
           if (card.id === draggedCard.id) {
@@ -133,24 +157,32 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
     } else {
       // Move card to new position or add from hand
       if (gameState.playArea.find(card => card.id === draggedCard.id)) {
-        // Move existing card
+        // Moving existing card - preserve rotation state
         setGameState(prev => ({
           ...prev,
           playArea: prev.playArea.map(card =>
             card.id === draggedCard.id
-              ? { ...card, position: newPosition }
+              ? { 
+                  ...card, 
+                  position: newPosition,
+                  rotation: cardStates[draggedCard.id]?.rotation || card.rotation || 0
+                }
               : card
           )
         }));
       } else {
-        // Add from hand
-        onMoveCardToPlayArea(draggedCard, newPosition);
+        // Add from hand - restore saved rotation if exists
+        const restoredRotation = cardStates[draggedCard.id]?.rotation || 0;
+        onMoveCardToPlayArea({
+          ...draggedCard,
+          rotation: restoredRotation
+        }, newPosition);
       }
     }
 
     setDraggedCard(null);
     setDragOffset({ x: 0, y: 0 });
-  }, [draggedCard, dragOffset, gameState, setGameState, onMoveCardToPlayArea, toast]);
+  }, [draggedCard, dragOffset, gameState, setGameState, onMoveCardToPlayArea, toast, cardStates, folders]);
 
   const handleDragOver = useCallback((event) => {
     event.preventDefault();
@@ -158,7 +190,6 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
 
   const handleCardClick = useCallback((cardId) => {
     setSelectedCard(cardId);
-    // Visual feedback for selected card
     toast({
       title: "Card Selected",
       description: "Press Delete key to remove from board"
@@ -187,6 +218,15 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
           : card
       )
     }));
+    
+    // Save rotation state
+    setCardStates(prev => ({
+      ...prev,
+      [cardId]: {
+        ...prev[cardId],
+        rotation: ((prev[cardId]?.rotation || 0) + 180) % 360
+      }
+    }));
   }, [setGameState]);
 
   const handleCardFlip = useCallback((cardId) => {
@@ -213,21 +253,11 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
 
   const handleCardHover = useCallback((card, isHovering) => {
     if (isHovering) {
-      // Set hover card for zoom
-      const timeoutId = setTimeout(() => {
-        setHoverCard(card);
-      }, 2000);
-      card.hoverTimeout = timeoutId;
-      
       // Set hovered stack for shuffling
       if (card.stack && card.stack.length > 0) {
         setHoveredStack(card.id);
       }
     } else {
-      if (card.hoverTimeout) {
-        clearTimeout(card.hoverTimeout);
-      }
-      setHoverCard(null);
       setHoveredStack(null);
     }
   }, []);
@@ -274,7 +304,8 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
       position: centerPosition,
       rotation: 0,
       flipped: false,
-      stack: restCards
+      deckOrigin: deck.id,
+      stack: restCards.map(card => ({ ...card, deckOrigin: deck.id }))
     };
 
     setGameState(prev => ({
@@ -282,6 +313,23 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
       playArea: [...prev.playArea, stackedCard]
     }));
   }, [setGameState, toast]);
+
+  // Enhanced move to hand that saves rotation state
+  const handleMoveToHand = useCallback((card, player) => {
+    // Save current rotation state before moving to hand
+    const currentCard = gameState.playArea.find(c => c.id === card.id);
+    if (currentCard) {
+      setCardStates(prev => ({
+        ...prev,
+        [card.id]: {
+          ...prev[card.id],
+          rotation: currentCard.rotation || 0
+        }
+      }));
+    }
+    
+    onMoveCardToHand(card, player);
+  }, [gameState.playArea, onMoveCardToHand]);
 
   return (
     <div className="h-full flex">
@@ -313,7 +361,7 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
         >
           {/* Render cards in play area */}
           {gameState.playArea.map((card) => (
-            <DraggableCard
+            <EnhancedDraggableCard
               key={card.id}
               card={card}
               position={card.position}
@@ -328,6 +376,7 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
               hasStack={card.stack && card.stack.length > 0}
               isHoveredStack={hoveredStack === card.id}
               isSelected={selectedCard === card.id}
+              deckCardBack={getDeckCardBack(card)}
             />
           ))}
 
@@ -335,7 +384,7 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
           <div className="absolute bottom-4 left-4 bg-slate-800/90 border border-slate-600 rounded-lg p-3 text-white text-sm space-y-1 pointer-events-none">
             <div>• Click card + Delete key to remove</div>
             <div>• Press 'S' while hovering stack to shuffle</div>
-            <div>• Drag from library to deploy cards</div>
+            <div>• Hover 2s for card zoom at cursor</div>
             <div>• Double-click to flip, R key to rotate</div>
           </div>
 
@@ -350,21 +399,6 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
           {selectedCard && (
             <div className="absolute top-4 right-4 bg-blue-600 border border-blue-500 rounded-lg p-3 text-white text-sm shadow-lg">
               Press 'Delete' to remove selected card
-            </div>
-          )}
-
-          {/* Hover Card Preview */}
-          {hoverCard && (
-            <div className="absolute top-16 right-4 z-50 pointer-events-none">
-              <Card className="w-48 h-64 bg-slate-700 border-slate-600 shadow-2xl">
-                <div className="w-full h-full rounded-lg overflow-hidden">
-                  <img 
-                    src={hoverCard.image || '/api/placeholder/200/280'} 
-                    alt={hoverCard.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </Card>
             </div>
           )}
         </div>
@@ -384,13 +418,18 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
             stack={stackModal.stack}
             position={stackModal.position}
             onClose={() => setStackModal(null)}
-            onMoveToHand={onMoveCardToHand}
+            onMoveToHand={handleMoveToHand}
             onSeparateCard={(card) => {
               const newPosition = {
                 x: stackModal.position.x - 100,
                 y: stackModal.position.y - 100
               };
-              onMoveCardToPlayArea(card, newPosition);
+              // Restore saved rotation when separating from stack
+              const cardWithRotation = {
+                ...card,
+                rotation: card.savedRotation || 0
+              };
+              onMoveCardToPlayArea(cardWithRotation, newPosition);
               setStackModal(null);
             }}
           />
@@ -398,7 +437,7 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
       </div>
 
       {/* Right Sidebar */}
-      <GameBoardSidebar 
+      <EnhancedGameBoardSidebar 
         folders={folders}
         onDeployDeck={handleDeployDeck}
       />
@@ -406,4 +445,4 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
   );
 };
 
-export default FinalEnhancedGameBoard;
+export default UltimateGameBoard;
