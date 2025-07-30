@@ -445,4 +445,4 @@ const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMov
   );
 };
 
-export default UltimateGameBoard;
+export default FinalEnhancedGameBoard;
