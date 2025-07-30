@@ -153,7 +153,7 @@ const GameSimulator = () => {
         </TabsList>
 
         <TabsContent value="game" className="h-full p-0">
-          <UltimateGameBoard 
+          <FinalEnhancedGameBoard 
             gameState={gameState}
             setGameState={setGameState}
             cards={cards}
