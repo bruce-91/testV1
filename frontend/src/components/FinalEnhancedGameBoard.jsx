@@ -6,7 +6,7 @@ import StackModal from "./StackModal";
 import EnhancedGameBoardSidebar from "./EnhancedGameBoardSidebar";
 import { useToast } from "../hooks/use-toast";
 
-const UltimateGameBoard = ({ gameState, setGameState, cards, folders, onMoveCardToHand, onMoveCardToPlayArea }) => {
+const FinalEnhancedGameBoard = ({ gameState, setGameState, cards, folders, onMoveCardToHand, onMoveCardToPlayArea }) => {
   const [draggedCard, setDraggedCard] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedCards, setSelectedCards] = useState([]);
